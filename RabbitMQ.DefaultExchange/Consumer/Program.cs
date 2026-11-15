@@ -1,4 +1,4 @@
-﻿using RabbitMQ.Client;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Text;
@@ -9,11 +9,18 @@ namespace Consumer
     {
         static void Main(string[] args)
         {
-            var factory = new ConnectionFactory() { HostName = "localhost" };
+            const string queueName = "lab-4-riabokon";
+            int receivedCount = 0;
+
+            var factory = new ConnectionFactory()
+            {
+                HostName = "localhost"
+            };
+
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: "dev-queue",
+                channel.QueueDeclare(queue: queueName,
                                      durable: false,
                                      exclusive: false,
                                      autoDelete: false,
@@ -23,16 +30,19 @@ namespace Consumer
 
                 consumer.Received += (sender, e) =>
                 {
-                    var body = e.Body;
-                    var message = Encoding.UTF8.GetString(body.ToArray());
-                    Console.WriteLine(" Received message: {0}", message);
+                    var message = Encoding.UTF8.GetString(e.Body.ToArray());
+                    receivedCount++;
+
+                    Console.WriteLine(
+                        $"Отримано повідомлення №{receivedCount}: {message}");
                 };
 
-                channel.BasicConsume(queue: "dev-queue",
+                channel.BasicConsume(queue: queueName,
                                      autoAck: true,
                                      consumer: consumer);
 
-                Console.WriteLine("Subscribed to the queue 'dev-queue'");
+                Console.WriteLine($"Очікування повідомлень із черги '{queueName}'.");
+                Console.WriteLine("Для зупинки натисніть Enter.");
 
                 Console.ReadLine();
             }
